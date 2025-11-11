@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: people-api
+  namespace: people
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: people-api }
+  template:
+    metadata:
+      labels: { app: people-api }
+    spec:
+      containers:
+        - name: api
+          image: REPLACE_ECR_URL/people-api:TAG
+          ports:
+            - containerPort: 8000
+          env:
+            - name: MONGO_URI
+              value: mongodb://mongo.people.svc.cluster.local:27017/
+            - name: DB_NAME
+              value: peopledb

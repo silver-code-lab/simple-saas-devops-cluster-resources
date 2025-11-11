@@ -8,8 +8,9 @@ permissions:
   contents: read
 
 env:
-  CLUSTER_NAME: simple-saas-devops-eks
   AWS_REGION: ap-south-1
+  CLUSTER_NAME: simple-saas-devops-eks
+  NAMESPACE: people
 
 jobs:
   apply:
@@ -29,4 +30,17 @@ jobs:
       - name: Apply kustomize base
         run: |
           kubectl apply -k base/
-          kubectl -n people rollout status deploy/people-api --timeout=180s || true
+          kubectl -n "$NAMESPACE" rollout status deploy/mongo --timeout=300s || true
+          kubectl -n "$NAMESPACE" rollout status deploy/people-api --timeout=300s || true
+
+      - name: Health check (print LoadBalancer & /health)
+        run: |
+          set -e
+          for i in {1..30}; do
+            LB=$(kubectl -n "$NAMESPACE" get svc people-api -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)
+            if [ -n "$LB" ]; then echo "LB=$LB"; break; fi
+            sleep 10
+          done
+          test -n "$LB"
+          curl -sSf "http://$LB/health" | tee /tmp/health.json
+          echo "::notice title=health::$(cat /tmp/health.json)"

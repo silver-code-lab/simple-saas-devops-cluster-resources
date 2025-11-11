@@ -5,3 +5,8 @@ resources:
   - mongo-pvc.yaml
   - mongo.yaml
   - people-api.yaml
+
+  # Added: HPA & NetworkPolicies
+  - hpa-people-api.yaml
+  - netpol-people-api-ingress.yaml
+  - netpol-people-api-egress.yaml

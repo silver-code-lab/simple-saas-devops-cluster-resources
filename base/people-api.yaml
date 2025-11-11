@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: people-api
+  namespace: people
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: people-api } }
+  template:
+    metadata: { labels: { app: people-api } }
+    spec:
+      containers:
+        - name: api
+          image: 559050216567.dkr.ecr.ap-south-1.amazonaws.com/people-api:latest
+          ports: [{ containerPort: 8000 }]
+          env:
+            - name: MONGO_URL
+              value: "mongodb://mongo.people.svc.cluster.local:27017/people"
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: people-api
+  namespace: people
+spec:
+  type: LoadBalancer
+  selector: { app: people-api }
+  ports:
+    - port: 80
+      targetPort: 8000
